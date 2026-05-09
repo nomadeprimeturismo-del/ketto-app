@@ -1,0 +1,234 @@
+{
+  "entities": {
+    "ClubKetto": {
+      "title": "Club Ketto Loyalty",
+      "description": "Loyalty program data for users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "totalPoints": { "type": "number" },
+        "totalSpent": { "type": "number" },
+        "currentLevel": { "type": "string", "enum": ["BRONZE", "PRATA", "OURO", "DIAMANTE", "BLACK"] },
+        "cashbackPercent": { "type": "number" },
+        "nextLevel": { "type": "string" },
+        "nextLevelPoints": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Wallet": {
+      "title": "KettoPay Wallet",
+      "description": "User digital wallet for payments and cashback",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "balance": { "type": "number" },
+        "cashbackBalance": { "type": "number" },
+        "totalAdded": { "type": "number" },
+        "totalCashbackReceived": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "blocked"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "balance"]
+    },
+    "WalletDeposit": {
+      "title": "Wallet Deposit",
+      "description": "Funds added to the wallet via PIX",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "walletId": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["pix"] },
+        "status": { "type": "string", "enum": ["pending", "paid", "expired", "failed"] },
+        "pixQrCode": { "type": "string" },
+        "pixCopyPaste": { "type": "string" },
+        "externalPaymentId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "paidAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "WalletTransaction": {
+      "title": "Wallet Transaction",
+      "description": "Historical record of all movements",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "walletId": { "type": "string" },
+        "type": { "type": "string", "enum": ["deposit", "ride_payment", "cashback", "transfer"] },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "status": { "type": "string" },
+        "referenceId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "User": {
+      "title": "User",
+      "description": "Standard user data for passengers, drivers, and admins",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string", "description": "Full name" },
+        "email": { "type": "string", "format": "email" },
+        "telefone": { "type": "string" },
+        "cpf": { "type": "string" },
+        "data_nascimento": { "type": "string", "format": "date" },
+        "tipo_usuario": { "type": "string", "enum": ["passageiro", "motorista", "admin"] },
+        "foto_perfil": { "type": "string" },
+        "criado_em": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nome", "email", "tipo_usuario"]
+    },
+    "Driver": {
+      "title": "Driver Profile",
+      "description": "Extended information for drivers",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "cnh": { "type": "string" },
+        "documento_veiculo": { "type": "string" },
+        "placa": { "type": "string" },
+        "modelo_veiculo": { "type": "string" },
+        "cor_veiculo": { "type": "string" },
+        "ano_veiculo": { "type": "string" },
+        "tipo_veiculo": { "type": "string", "enum": ["carro", "moto", "outro"] },
+        "chave_pix": { "type": "string" },
+        "status_aprovacao": { "type": "string", "enum": ["pendente", "aprovado", "reprovado", "bloqueado"] },
+        "online": { "type": "boolean" },
+        "latitude_atual": { "type": "number" },
+        "longitude_atual": { "type": "number" },
+        "avaliacao_media": { "type": "number" },
+        "criado_em": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Ride": {
+      "title": "Ride",
+      "description": "Ride transaction data",
+      "type": "object",
+      "properties": {
+        "passageiro_id": { "type": "string" },
+        "motorista_id": { "type": "string" },
+        "origem": { "type": "string" },
+        "destino": { "type": "string" },
+        "latitude_origem": { "type": "number" },
+        "longitude_origem": { "type": "number" },
+        "latitude_destino": { "type": "number" },
+        "longitude_destino": { "type": "number" },
+        "distancia_km": { "type": "number" },
+        "tempo_estimado": { "type": "number" },
+        "valor_estimado": { "type": "number" },
+        "valor_final": { "type": "number" },
+        "forma_pagamento": { "type": "string", "enum": ["dinheiro", "pix", "credito", "debito", "carteira"] },
+        "categoria": { "type": "string", "enum": ["economico", "conforto", "moto", "entrega"] },
+        "status": { "type": "string", "enum": ["solicitada", "procurando_motorista", "aceita", "motorista_chegando", "em_andamento", "finalizada", "cancelada"] },
+        "criado_em": { "type": "string", "format": "date-time" },
+        "finalizado_em": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment records",
+      "type": "object",
+      "properties": {
+        "ride_id": { "type": "string" },
+        "passageiro_id": { "type": "string" },
+        "motorista_id": { "type": "string" },
+        "valor_total": { "type": "number" },
+        "comissao_app": { "type": "number" },
+        "valor_motorista": { "type": "number" },
+        "forma_pagamento": { "type": "string" },
+        "status_pagamento": { "type": "string" },
+        "criado_em": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Review": {
+      "title": "Review",
+      "description": "User reviews and ratings",
+      "type": "object",
+      "properties": {
+        "ride_id": { "type": "string" },
+        "avaliador_id": { "type": "string" },
+        "avaliado_id": { "type": "string" },
+        "nota": { "type": "number" },
+        "comentario": { "type": "string" },
+        "criado_em": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Support": {
+      "title": "Support",
+      "description": "Support tickets",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "tipo": { "type": "string" },
+        "mensagem": { "type": "string" },
+        "status": { "type": "string" },
+        "criado_em": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app notifications",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error"] },
+        "read": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Global user collection"
+    },
+    "/club_ketto/{userId}": {
+      "schema": "ClubKetto",
+      "description": "Club Ketto loyalty data indexed by userId"
+    },
+    "/wallets/{userId}": {
+      "schema": "Wallet",
+      "description": "User wallets indexed by userId"
+    },
+    "/wallet_deposits/{depositId}": {
+      "schema": "WalletDeposit",
+      "description": "Wallet deposits history"
+    },
+    "/wallet_transactions/{transactionId}": {
+      "schema": "WalletTransaction",
+      "description": "Full transaction history for all wallets"
+    },
+    "/drivers/{driverId}": {
+      "schema": "Driver",
+      "description": "Driver-specific profiles (linked by userId)"
+    },
+    "/rides/{rideId}": {
+      "schema": "Ride",
+      "description": "Ride sessions"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Payment history"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Ride reviews"
+    },
+    "/support/{supportId}": {
+      "schema": "Support",
+      "description": "Support messages"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "/settings/config": {
+      "schema": "object",
+      "description": "Application settings (fees, prices per km, etc)"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isProjectOwner() {
+      return isSignedIn() && request.auth.token.email == 'nomadeprimeturismo@gmail.com';
+    }
+
+    function isAdmin() {
+      return isProjectOwner() || (
+        isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tipo_usuario == 'admin'
+      );
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Schema Validations
+    function isValidUser(data) {
+      return data.nome is string && data.nome.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.tipo_usuario in ['passageiro', 'motorista', 'admin'];
+    }
+
+    function isValidRide(data) {
+      return data.status in ['solicitada', 'procurando_motorista', 'aceita', 'motorista_chegando', 'em_andamento', 'finalizada', 'cancelada'] &&
+             data.valor_estimado is number &&
+             data.passageiro_id == request.auth.uid;
+    }
+
+    // Collection Rules
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+    }
+
+    match /drivers/{driverId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin() || isProjectOwner();
+      allow create: if isSignedIn() && (isOwner(driverId) || isProjectOwner());
+      allow update: if isSignedIn() && (isOwner(driverId) || isAdmin() || isProjectOwner() || request.resource.data.diff(resource.data).affectedKeys().hasAny(['total_ganhos', 'total_corridas', 'online', 'saldo', 'updatedAt']));
+    }
+
+    match /rides/{rideId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (resource.data.user_id == request.auth.uid || resource.data.driver_id == request.auth.uid || isAdmin());
+      allow create: if isSignedIn(); 
+      allow update: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (request.resource.data.avaliador_id == request.auth.uid);
+    }
+
+    match /support/{supportId} {
+      allow read: if isSignedIn() && (resource.data.user_id == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /settings/config {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn(); // System logic currently runs on client
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+    }
+
+    match /club_ketto/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /pointsHistory/{historyId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+    }
+
+    match /wallets/{userId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      // For this app, we allow the owner to update balance because we are using client-side transactions
+      // In a real production app, balance updates should ONLY happen via Cloud Functions
+      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
+    }
+
+    match /wallet_deposits/{depositId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn(); // Allow client to update status for simulation OR restricted to admin
+    }
+
+    match /wallet_transactions/{transactionId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn(); // Allow client to log its own financial movements
+      allow update, delete: if false;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Ketto Mobilidade",
+  "description": "Premium ride-sharing application with real-time Club Ketto loyalty system, tracking, and automated fare calculations.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
